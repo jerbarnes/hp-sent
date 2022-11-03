@@ -170,7 +170,7 @@ def break_up_expressions(pred, label2idx):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--datasets", default=["mpqa", "darmstadt_unis", "multibooked_ca", "multibooked_eu", "norec", "opener_en", "opener_es"])
+    parser.add_argument("--datasets", default=["multibooked_eu"])
 
     args = parser.parse_args()
 
