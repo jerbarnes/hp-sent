@@ -47,9 +47,6 @@ instead by the number of gold tokens), allowing
 for empty holders and targets which exist in the gold standard.
 
 
- The leaderboard for each dataset, as well as the average of all 7. The winning submission will be the one that has the highest average Sentiment Graph F<sub>1</sub>.
-
-
 ## Data format
 
 We provide the data in json lines format.
@@ -122,8 +119,6 @@ We also provide some links to what we believe could be helpful resources:
 ## Baselines
 
 The task organizers provide two baselines: one that takes a sequence-labelling approach and a second that converts the problem to a dependency graph parsing task. You can find both of them in [baselines](./baselines).
-
-
 
 
 ## Citation
