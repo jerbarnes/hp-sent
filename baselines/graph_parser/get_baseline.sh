@@ -1,6 +1,6 @@
 #!/bin/bash
 # Set some random seeds that will be the same for all experiments
-SEEDS=(17181920)
+SEED=17181920
 
 # Setup directories
 mkdir logs
@@ -38,6 +38,12 @@ for SETUP in head_final; do
     else
         mkdir logs/multibooked_eu/$SETUP;
         LOGFILE=logs/multibooked_eu/$SETUP/log.txt
-        bash ./sentgraph.sh  multibooked_eu $SETUP $SEED > $LOGFILE
+        DIR=experiments/multibooked_eu/$SETUP
+        echo saving experiment to $DIR
+
+        rm -rf $DIR
+        mkdir -p $DIR
+
+        python3 ./src/main.py --config configs/sgraph.cfg --train $TRAIN --val $DEV --predict_file $TEST --dir $DIR --external $EXTERNAL --seed $SEED
     fi
 done;
