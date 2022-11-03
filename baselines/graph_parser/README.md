@@ -31,10 +31,22 @@ bash ./get_baseline.sh
 The models will be saved as pytorch models in /experiments under the name best_model.save. You can then use the inference.sh script to use the models to predict on unseen data:
 
 ```
-bash ./inference.sh sentiment_graphs/multibooked_eu/head_final/test.conllu experiments/multibooked_eu/head_final/ embeddings/32.zip
+python3 ./src/main.py --config configs/sgraph.cfg --predict_file sentiment_graphs/multibooked_eu/head_final/test.conllu --external embeddings/32.zip --load experiments/multibooked_eu/head_final/best_model.save
 ```
 
 The predictions (test.conllu.pred, test.conllu.json) will be written to the same directory where the model is found. The json files contain the predictions converted to the appropriate submission format, while the conllu.pred files show the actual predictions.
+
+
+You can also train a model directly using src/main.py. In the following example, you can see how we train a model with previously computed contextual embeddings:
+
+
+```
+python3 ./src/main.py --config configs/sgraph.cfg --train sentiment_graphs/multibooked_eu/head_final/train.conllu --val sentiment_graphs/multibooked_eu/head_final/dev.conllu --predict_file sentiment_graphs/multibooked_eu/head_final/test.conllu --dir experiments/multibooked_eu/head_final/ --external embeddings/32.zip --context_emb_train ../../contextual_embeddings/train.hdf5 --context_emb_dev ../../contextual_embeddings/dev.hdf5 --context_emb_test ../../contextual_embeddings/test.hdf5 --use_context_emb True --vec_dim 768
+
+```
+
+Note that besides giving hdf5 files computed using context_emb.py ( --context_emb_train --context_emb_dev --context_emb_test), you also need to include the '--use_context_emb True' flag and include the size of the embeddings after '--vec_dim'
+
 
 ## Suggested reading
 

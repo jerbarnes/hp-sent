@@ -100,7 +100,7 @@ class ModelInteractor:
             vocabs=self.vocabs,
             external=self.external,
             settings=self.settings,
-            elmo=self.settings.elmo_train,
+            context_emb=self.settings.context_emb_train,
             vec_dim=self.settings.vec_dim)
         return DataLoader(
             self.train_data,
@@ -108,13 +108,13 @@ class ModelInteractor:
             shuffle=True,
             collate_fn=padded_collate)
 
-    def _init_test_data(self, test_path, elmo_path=None):
+    def _init_test_data(self, test_path, context_emb_path=None):
         self.test_data = MyDataset(
             test_path,
             vocabs=self.vocabs,
             external=self.external,
             settings=self.settings,
-            elmo=elmo_path,
+            context_emb=context_emb_path,
             vec_dim=self.settings.vec_dim)
         return DataLoader(
             self.test_data,
@@ -191,7 +191,7 @@ class ModelInteractor:
             + " ({} trained sequences/s)".format(round(sequences_trained/(total_time))))
             print("#" * 50, flush=True)
             if not settings.disable_val_eval:
-                entries, predicted, other_predicted = self.predict(settings.val, settings.elmo_dev)
+                entries, predicted, other_predicted = self.predict(settings.val, settings.context_emb_dev)
                 #a,d,b,c = zip(*((entry[0], len(entry[4]), entry[1].numpy().shape, predicted[entry[0]].numpy().shape) for entry in entries))
                 #print([(x,w,y,z) for x,w,y,z in zip(a,d,b,c) if y!=z])
                 f1, _ = sc.score(*zip(*((entry[1][self.pt].numpy(), predicted[entry[0]].numpy()) for entry in entries)))
@@ -224,7 +224,7 @@ class ModelInteractor:
                     print("Best F1 was {:.2%} seen at epoch #{}".format(best_f1, best_f1_epoch))
 
             if settings.enable_train_eval:
-                entries, predicted, other_predicted = self.predict(settings.train, settings.elmo_train)
+                entries, predicted, other_predicted = self.predict(settings.train, settings.context_emb_train)
                 train_f1, _ = sc.score(*zip(*((entry[1][self.pt].numpy(), predicted[entry[0]].numpy()) for entry in entries)))
                 print("Train F1 on epoch {} is {:.2%}".format(epoch, train_f1))
 
@@ -262,9 +262,9 @@ class ModelInteractor:
         if gradient_clipping:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
-    def predict(self, data_path, elmo_path=None):
+    def predict(self, data_path, context_emb_path=None):
         print("Predicting data from", data_path)
-        test_loader = self._init_test_data(data_path, elmo_path)
+        test_loader = self._init_test_data(data_path, context_emb_path)
         self.model.eval()
         predictions = {}
         other_predictions = {}

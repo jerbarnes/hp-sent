@@ -27,11 +27,11 @@ def get_args(forced_args=None):
     parser.add_argument("--cont", action="store_true")
     parser.add_argument("--config", metavar="FILE")
     parser.add_argument("--dir", type=str, default="./")
-    parser.add_argument("--elmo_train", type=str, default=None)
-    parser.add_argument("--elmo_dev", type=str, default=None)
-    parser.add_argument("--elmo_test", type=str, default=None)
+    parser.add_argument("--context_emb_train", type=str, default=None)
+    parser.add_argument("--context_emb_dev", type=str, default=None)
+    parser.add_argument("--context_emb_test", type=str, default=None)
     parser.add_argument("--vec_dim", type=int, default=1024)
-    parser.add_argument("--use_elmo", type=str2bool, default=False)
+    parser.add_argument("--use_context_emb", type=str2bool, default=False)
     parser.add_argument("--recycle", type=str, default=None)
     parser.add_argument("--recycle_layers", type=str, default=None)
     parser.add_argument("--freeze", type=str, default=None)
@@ -296,10 +296,10 @@ def get_args(forced_args=None):
     return args
 
 
-def predict(model, settings, to_predict, elmo, vocabs):
+def predict(model, settings, to_predict, context_emb, vocabs):
     pred_path = settings.dir + to_predict.split("/")[-1] + ".pred"
     json_path = settings.dir + to_predict.split("/")[-1] + ".json"
-    entries, predicted, other_predicted = model.predict(to_predict, elmo)
+    entries, predicted, other_predicted = model.predict(to_predict, context_emb)
 
     json_sentences = []
 
@@ -387,13 +387,13 @@ def run_parser(args):
         # load the best_model.save instead of using the current one
         model = ModelInteractor.factory(args, vocabs)
         model.load(args.dir + "best_model.save")
-        predict(model, args, args.val, args.elmo_dev, vocabs)
+        predict(model, args, args.val, args.context_emb_dev, vocabs)
 
     if args.predict_file is not None:
         # load the best_model.save instead of using the current one
         model = ModelInteractor.factory(args, vocabs)
         model.load(args.dir + "best_model.save")
-        predict(model, args, args.predict_file, args.elmo_test, vocabs)
+        predict(model, args, args.predict_file, args.context_emb_test, vocabs)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ class BaseLSTM(nn.Module):
         self.unfactorized = settings.unfactorized
         self.emb_dropout_type = settings.emb_dropout_type
 
-        self.use_elmo = settings.use_elmo
+        self.use_context_emb = settings.use_context_emb
 
         self.init_embeddings(vocabs, external, settings)
 
@@ -41,7 +41,7 @@ class BaseLSTM(nn.Module):
         main_lstm_input = (
             settings.dim_embedding *
             (self.use_form + self.use_pos + self.use_lemma + self.use_char) +
-            (external.dim * self.use_external + self.use_elmo * 100))
+            (external.dim * self.use_external + self.use_context_emb * 100))
         self.main_lstm_input = main_lstm_input
         self.lstm = EnhancedLSTM(
             settings.lstm_implementation,
@@ -107,7 +107,7 @@ class BaseLSTM(nn.Module):
             raise "Unsupported embedding dropout type"
 
     def merge_features(self, word_indices, pos_indices, external_indices,
-                       lemma_indices, char_features, elmo_vecs):
+                       lemma_indices, char_features, context_emb_vecs):
         features = []
 
         if self.use_form:
@@ -130,14 +130,14 @@ class BaseLSTM(nn.Module):
         if self.use_char:
             features.append(char_features)
 
-        if self.use_elmo: # if use_elmo
-            features.append(elmo_vecs)
+        if self.use_context_emb: # if use_context_emb
+            features.append(context_emb_vecs)
 
         return torch.cat(features, 2)
 
 
     def forward(self, seq_lengths, chars, word_indices,
-                pos_indices, external_indices, lemma_indices, elmo_vecs=None):
+                pos_indices, external_indices, lemma_indices, context_emb_vecs=None):
         word_indices = word_indices
         pos_indices = pos_indices
         external_indices = external_indices if self.use_external else None
@@ -149,7 +149,7 @@ class BaseLSTM(nn.Module):
 
         merged_features = self.merge_features(word_indices, pos_indices,
                                               external_indices, lemma_indices,
-                                              char_features, elmo_vecs)
+                                              char_features, context_emb_vecs)
 
         # (batch x seq x 2*dim_lstm)
         output = self.lstm(merged_features, None, seq_lengths)
@@ -297,10 +297,10 @@ class BiLSTMModel(nn.Module):
         self.combine = None
         self.helpers = settings.helpers
         self.base = BaseLSTM(vocabs, external, settings)
-        if settings.use_elmo:
-            self.scalelmo = nn.Linear(settings.vec_dim, 100)
+        if settings.use_context_emb:
+            self.scalcontext_emb = nn.Linear(settings.vec_dim, 100)
         else:
-            self.scalelmo = None
+            self.scalcontext_emb = None
         if settings.ot:
             self.other_scorer = Scorer(self.n_labels_other, settings, False, True)
 
@@ -328,13 +328,13 @@ class BiLSTMModel(nn.Module):
 
 
     def forward(self, other_targets, seq_lengths, chars, word_indices,
-                pos_indices, external_indices, lemma_indices, elmo_vecs=None):
+                pos_indices, external_indices, lemma_indices, context_emb_vecs=None):
 
 
-        if self.scalelmo:
-            elmo_scaled = self.scalelmo(elmo_vecs)
+        if self.scalcontext_emb:
+            context_emb_scaled = self.scalcontext_emb(context_emb_vecs)
         else:
-            elmo_scaled = None
+            context_emb_scaled = None
         # (batch x seq x 2*dim_lstm)
         if torch.cuda.is_available():
             print("model start")
@@ -343,7 +343,7 @@ class BiLSTMModel(nn.Module):
             torch.cuda.empty_cache()
             print(torch.cuda.memory_cached(self.settings.device)/10**6)
         output, inputs = self.base( seq_lengths, chars, word_indices, pos_indices,
-                external_indices, lemma_indices, elmo_scaled)
+                external_indices, lemma_indices, context_emb_scaled)
 
         if torch.cuda.is_available():
             print("post bilstm")

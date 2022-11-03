@@ -46,9 +46,9 @@ def get_args(fname, args):
     d["val"]                    = cfg.get("data", "val", fallback=None)
     d["predict_file"]           = cfg.get("data", "predict_file", fallback=None)
     d["external"]               = cfg.get("data", "external", fallback=None)
-    d["elmo_train"]             = cfg.get("data", "elmo_train", fallback=None)
-    d["elmo_dev"]               = cfg.get("data", "elmo_dev", fallback=None)
-    d["elmo_test"]              = cfg.get("data", "elmo_test", fallback=None)
+    d["context_emb_train"]      = cfg.get("data", "context_emb_train", fallback=None)
+    d["context_emb_dev"]        = cfg.get("data", "context_emb_dev", fallback=None)
+    d["context_emb_test"]       = cfg.get("data", "context_emb_test", fallback=None)
     d["load"]                   = cfg.get("data", "load", fallback=None)
     d["target_style"]           = cfg.get("data", "target_style", fallback=None)
     d["other_target_style"]     = cfg.get("data", "other_target_style", fallback=None)
@@ -91,7 +91,7 @@ def get_args(fname, args):
     d["disable_lemma"]          = cfg.getboolean("features", "disable_lemma", fallback=None)
     d["disable_pos"]            = cfg.getboolean("features", "disable_pos", fallback=None)
     d["disable_form"]           = cfg.getboolean("features", "disable_form", fallback=None)
-    d["use_elmo"]               = cfg.getboolean("features", "use_elmo", fallback=None)
+    d["use_context_emb"]               = cfg.getboolean("features", "use_context_emb", fallback=None)
     d["tree"]                   = cfg.getboolean("features", "tree", fallback=None)
                     
     #[dropout]     

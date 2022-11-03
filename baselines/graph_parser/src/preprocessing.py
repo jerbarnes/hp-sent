@@ -8,14 +8,14 @@ import h5py
 class IndexEntry:
     """Convert and store a Sentence in index format"""
 
-    def __init__(self, sentence, vocabs, external, settings, elmo_vecs, vec_dim=1024):
+    def __init__(self, sentence, vocabs, external, settings, context_emb_vecs, vec_dim=1024):
 
         word_indices = []
         pos_indices = []
         external_indices = []
         lemma_indices = []
         char_indices = []
-        elmo_vectors = []
+        context_emb_vectors = []
         # init with root
         pos_style = settings.pos_style
         word_indices.append(vocabs.norms.get(vcb.BOS))
@@ -27,13 +27,13 @@ class IndexEntry:
         lemma_indices.append(vocabs.lemmas.get(vcb.BOS))
         char_indices.append(
             tuple(vocabs.chars.get(vcb.BOS) for c in range(1)))
-        if settings.use_elmo:
-            elmo_vectors.append(torch.zeros(vec_dim))
+        if settings.use_context_emb:
+            context_emb_vectors.append(torch.zeros(vec_dim))
         else:
-            elmo_vecs = [None for _ in range(len(sentence))]
+            context_emb_vecs = [None for _ in range(len(sentence))]
 
 
-        for token, vec in zip(sentence, elmo_vecs):
+        for token, vec in zip(sentence, context_emb_vecs):
             word_indices.append(vocabs.norms.get(token.norm))
             if pos_style == "xpos":
                 pos_indices.append(vocabs.xposs.get(token.xpos))
@@ -43,8 +43,8 @@ class IndexEntry:
             lemma_indices.append(vocabs.lemmas.get(token.lemma))
             char_indices.append(
                 tuple(vocabs.chars.get(c) for c in token.form))
-            if settings.use_elmo:
-                elmo_vectors.append(torch.Tensor(vec))
+            if settings.use_context_emb:
+                context_emb_vectors.append(torch.Tensor(vec))
 
 
         self._id = sentence.id
@@ -60,11 +60,11 @@ class IndexEntry:
                         sentence.make_matrix("scope", True, vocabs.scoperels.w2i),
                         sentence.make_matrix("scope-", True, vocabs.scoperels.w2i)]
 
-        if settings.use_elmo:
-            self.elmo_vecs = torch.stack(elmo_vectors)
-            self.elmo_vecs.requires_grad = False
+        if settings.use_context_emb:
+            self.context_emb_vecs = torch.stack(context_emb_vectors)
+            self.context_emb_vecs.requires_grad = False
         else:
-            self.elmo_vecs = None
+            self.context_emb_vecs = None
 
         # no gradients require for external vectors and indices
         self.word_indices.requires_grad = False
@@ -74,7 +74,7 @@ class IndexEntry:
 
 
 class MyDataset(Dataset):
-    def __init__(self, data_path, vocabs, external, settings, elmo, vec_dim):
+    def __init__(self, data_path, vocabs, external, settings, context_emb, vec_dim):
         super().__init__()
 
         self.external = external
@@ -87,37 +87,37 @@ class MyDataset(Dataset):
         target_style=settings.target_style
         other_target_style=settings.other_target_style
 
-        self.use_elmo = settings.use_elmo
-        self._load_data(data_path, pos_style, target_style, other_target_style, elmo)
+        self.use_context_emb = settings.use_context_emb
+        self._load_data(data_path, pos_style, target_style, other_target_style, context_emb)
 
 
-    def _load_data(self, data_path, pos_style, target_style, other_target_style, elmo):
+    def _load_data(self, data_path, pos_style, target_style, other_target_style, context_emb):
         print("Loading data from {}".format(data_path))
         data = cd.read_col_data(data_path)
-        #with h5py.File(elmo, 'r') as f:
+        #with h5py.File(context_emb, 'r') as f:
         #    for sen in f:
         #        #print(sen)
         #        for word, vec in zip(sen.split("\t"), f[sen]):
         #            print(word, vec)
 
-        if self.use_elmo:
-            felmo = h5py.File(elmo, "r")
+        if self.use_context_emb:
+            fcontext_emb = h5py.File(context_emb, "r")
 
         self.index_entries = []
         for sentence in data:
             #print(sentence.id)
-            #print(len(sentence), len(felmo[sentence.id]))
-            if self.use_elmo:
+            #print(len(sentence), len(fcontext_emb[sentence.id]))
+            if self.use_context_emb:
                 self.index_entries.append(IndexEntry(
-                    sentence, self.vocabs, self.external, self.settings, felmo[sentence.id], self.vec_dim)
+                    sentence, self.vocabs, self.external, self.settings, fcontext_emb[sentence.id], self.vec_dim)
                     )
             else:
                 self.index_entries.append(IndexEntry(
                     sentence, self.vocabs, self.external, self.settings, None)
                     )
 
-        if self.use_elmo:
-            felmo.close()
+        if self.use_context_emb:
+            fcontext_emb.close()
         print("Done")
         #return data
 
@@ -131,10 +131,10 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         entry = self.index_entries[idx]
         targets = [torch.Tensor(target) for target in entry.targets]
-        if self.use_elmo:
+        if self.use_context_emb:
             return (entry._id, targets, entry.char_indices,
                     entry.word_indices, entry.pos_indices, entry.external_indices,
-                    entry.lemma_indices, entry.elmo_vecs)
+                    entry.lemma_indices, entry.context_emb_vecs)
         return (entry._id, targets, entry.char_indices,
                 entry.word_indices, entry.pos_indices, entry.external_indices,
                 entry.lemma_indices)
