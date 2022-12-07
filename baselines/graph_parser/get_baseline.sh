@@ -26,10 +26,12 @@ mkdir logs/multibooked_eu;
 mkdir experiments/multibooked_eu;
 # Iterate over the graph setups (head_final, head_first, head_final-inside_label, head_final-inside_label-dep_edges, head_final-inside_label-dep_edges-dep_labels, etc)
 # Currently, just use head_final, but you can use others
+
+
+
 for SETUP in head_final; do
     mkdir experiments/multibooked_eu/$SETUP;
     echo "Running multibooked_eu - $SETUP"
-    SEED=${SEEDS[0]}
     OUTDIR=experiments/multibooked_eu/$SETUP;
     mkdir experiments/multibooked_eu/$SETUP;
     # If a model is already trained, don't retrain
@@ -40,6 +42,11 @@ for SETUP in head_final; do
         LOGFILE=logs/multibooked_eu/$SETUP/log.txt
         DIR=experiments/multibooked_eu/$SETUP
         echo saving experiment to $DIR
+
+        TRAIN=sentiment_graphs/multibooked_eu/"$SETUP"/train.conllu
+        DEV=sentiment_graphs/multibooked_eu/"$SETUP"/dev.conllu
+        TEST=sentiment_graphs/multibooked_eu/"$SETUP"/test.conllu
+        EXTERNAL=embeddings/32.zip
 
         rm -rf $DIR
         mkdir -p $DIR
